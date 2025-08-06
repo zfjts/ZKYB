@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上传文档</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0f172a',
+                        secondary: '#1e40af',
+                        accent: '#3b82f6',
+                        neon: '#06b6d4',
+                        dark: '#020617',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .bg-gradient-tech {
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            }
+            .text-shadow-neon {
+                text-shadow: 0 0 8px rgba(6, 182, 212, 0.5);
+            }
+            .border-glow {
+                box-shadow: 0 0 5px rgba(6, 182, 212, 0.7);
+            }
+            .form-shadow {
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            }
+            .btn-hover {
+                transition: all 300ms ease;
+                transform: translateY(0);
+            }
+            .btn-hover:hover {
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                transform: translateY(-0.125rem);
+            }
+            }
+    </style>
+    </style>
+</head>
+<body class="bg-dark text-gray-100 min-h-screen font-sans bg-gradient-tech">
+    <!-- 导航栏 -->
+    <nav class="bg-primary/80 backdrop-blur-md shadow-md border-b border-neon/20 text-white">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-cogs text-2xl"></i>
+                <span class="text-xl font-bold">自控设备全生命周期管理平台</span>
+            </div>
+            <div class="hidden md:flex space-x-6">
+                <a href="/" class="text-gray-300 hover:text-neon transition-colors duration-300">首页</a>
+                <a href="/equipment/" class="text-gray-300 hover:text-neon transition-colors duration-300">设备管理</a>
+                <a href="/documents/" class="text-gray-300 hover:text-neon transition-colors duration-300">文档管理</a>
+            </div>
+            <div class="md:hidden">
+                <button class="text-white focus:outline-none">
+                    <i class="fa fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="container mx-auto px-4 py-8 max-w-4xl">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-white">{% if document %}编辑文档{% else %}上传文档{% endif %}</h1>
+            <a href="/documents/" class="text-secondary hover:text-primary flex items-center">
+                <i class="fa fa-arrow-left mr-1"></i>返回列表
+            </a>
+        </div>
+
+        <!-- 表单卡片 -->
+        <div class="bg-primary/50 backdrop-blur-sm rounded-lg shadow-md p-6 form-shadow border border-neon/20">
+            <form action="{% if document %}/documents/{{ document.id }}/edit{% else %}/documents/create/{% endif %}" method="post" {% if document %}enctype="application/x-www-form-urlencoded"{% else %}enctype="multipart/form-data"{% endif %}>
+    {% if document %}
+        <input type="hidden" name="document_id" value="{{ document.id }}">
+    {% endif %}
+                {% if equipment %}
+                    <input type="hidden" name="equipment_id" value="{{ equipment.id }}">
+                    <div class="mb-6 p-4 bg-blue-50 rounded-md border border-blue-100">
+                        <div class="flex items-center">
+                            <i class="fa fa-info-circle text-blue-500 mr-2"></i>
+                            <span class="text-sm font-medium text-blue-700">关联设备: {{ equipment.name }} ({{ equipment.model }})</span>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="md:col-span-2">
+                        <label for="title" class="block text-sm font-medium text-gray-300 mb-1">文档标题 <span class="text-red-500">*</span></label>
+                        <input type="text" id="title" name="title" required value="{{ document.title if document else '' }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-black">
+                    </div>
+
+                    <div>
+                        <label for="category" class="block text-sm font-medium text-gray-300 mb-1">文档分类 <span class="text-red-500">*</span></label>
+                        <select id="category" name="category" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-black">
+                            <option value="">请选择分类</option>
+                            <option value="说明书" {% if document and document.category == '说明书' %}selected{% endif %}>设备说明书</option>
+                            <option value="技术规范" {% if document and document.category == '技术规范' %}selected{% endif %}>技术规范</option>
+                            <option value="维护手册" {% if document and document.category == '维护手册' %}selected{% endif %}>维护手册</option>
+                            <option value="其他" {% if document and document.category == '其他' %}selected{% endif %}>其他文档</option>
+                        </select>
+                    </div>
+
+                    {% if not equipment %}
+                        <div>
+                            <label for="equipment_id" class="block text-sm font-medium text-gray-300 mb-1">关联设备</label>
+                            <select id="equipment_id" name="equipment_id"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-black">
+                                <option value="">无关联设备</option>
+                                {% for eq in equipment_list %}
+                                    <option value="{{ eq.id }}" {% if document and document.equipment_id == eq.id %}selected{% endif %}>{{ eq.name }} ({{ eq.model }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    {% endif %}
+
+                    <div class="md:col-span-2">
+                        <label for="description" class="block text-sm font-medium text-gray-300 mb-1">文档描述</label>
+                        <textarea id="description" name="description" rows="4"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-black">{{ document.description if document else '' }}</textarea>
+                    </div>
+
+                    {% if not document %}
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-300 mb-1">文件上传 <span class="text-red-500">*</span></label>
+                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                            <div class="space-y-1 text-center">
+                                <i class="fa fa-cloud-upload text-4xl text-gray-400 mb-3"></i>
+                                <div class="flex text-sm text-gray-600">
+                                    <label for="file" class="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-primary/80 focus-within:outline-none px-4 py-2 inline-block">
+                                        <i class="fa fa-upload mr-1"></i><span>上传文件</span>
+                                        <input id="file" name="file" type="file" class="sr-only" 
+                                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif" onchange="console.log('文件已选择:', this.files[0].name)">
+                                    </label>
+                                    <p class="pl-1">或拖放文件到此处</p>
+                                </div>
+                                <div id="file-name-display" class="mt-2 text-sm text-gray-500"></div>
+                                <p class="text-xs text-gray-500">
+                                    支持 PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, JPEG, PNG, GIF 格式
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="md:col-span-2 p-4 bg-gray-100 rounded-md border border-gray-200 text-gray-800">
+                        <div class="flex items-center">
+                            <i class="fa fa-file-text-o text-lg mr-2 text-blue-600"></i>
+                            <div>
+                                <p class="font-medium">{{ document.file_name }}</p>
+                                <p class="text-sm text-gray-600">最后更新: {{ document.update_date.strftime('%Y-%m-%d %H:%M') if document.update_date else document.upload_date.strftime('%Y-%m-%d %H:%M') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="mt-8 flex justify-end space-x-4">
+                    <a href="/documents/" class="px-6 py-2 border border-primary/70 rounded-md text-gray-300 hover:bg-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neon transition-all duration-300 btn-hover">
+                        取消
+                    </a>
+                    <button type="submit" class="px-6 py-2 bg-accent border border-transparent rounded-md shadow-sm text-white hover:bg-neon transition-all duration-300 hover:border-glow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neon btn-hover border-glow">
+                        <i class="fa fa-save mr-1"></i>{% if document %}更新文档{% else %}保存文档{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-800 text-white py-8 mt-12">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <i class="fa fa-cogs text-xl"></i>
+                        <span class="text-lg font-bold">自控设备全生命周期管理平台</span>
+                    </div>
+                    <p class="text-gray-400 text-sm">高效管理您的自控设备，提升维护效率</p>
+                </div>
+                <div class="flex space-x-6">
+
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-6 pt-6 text-center text-gray-400 text-sm">
+                © 2025 自控设备全生命周期管理平台. 保留所有权利.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 文件上传功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropArea = document.querySelector('.border-dashed');
+            const fileInput = document.getElementById('file');
+            const fileNameDisplay = document.getElementById('file-name-display');
+
+            console.log('文件上传组件已加载');
+
+            // 更新文件名称显示
+            fileInput.addEventListener('change', function() {
+                if (this.files.length) {
+                    fileNameDisplay.textContent = '已选择: ' + this.files[0].name;
+                    console.log('文件已选择:', this.files[0].name);
+                } else {
+                    fileNameDisplay.textContent = '';
+                }
+            });
+
+            // 拖放事件
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight() {
+                dropArea.classList.add('border-primary');
+                dropArea.classList.add('bg-blue-50');
+            }
+
+            function unhighlight() {
+                dropArea.classList.remove('border-primary');
+                dropArea.classList.remove('bg-blue-50');
+            }
+
+            dropArea.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+
+                if (files.length) {
+                    fileInput.files = files;
+                    fileNameDisplay.textContent = '已选择: ' + files[0].name;
+                    console.log('文件已拖放:', files[0].name);
+                }
+            }
+
+            // 标签已通过for属性与输入框关联，无需额外点击事件处理
+            console.log('文件上传组件初始化完成');
+        });
+    </script>
+</body>
+</html>

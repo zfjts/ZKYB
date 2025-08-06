@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>添加维护记录 - 自控设备全生命周期管理平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="/static/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0f172a',
+                        secondary: '#1e40af',
+                        accent: '#3b82f6',
+                        neon: '#06b6d4',
+                        dark: '#020617',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .bg-gradient-tech {
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            }
+            .text-shadow-neon {
+                text-shadow: 0 0 8px rgba(6, 182, 212, 0.5);
+            }
+            .border-glow {
+                box-shadow: 0 0 5px rgba(6, 182, 212, 0.7);
+            }
+            .card-hover {
+                transition: all 300ms ease;
+                will-change: transform;
+            }
+            .card-hover:hover {
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 10px rgba(6, 182, 212, 0.2);
+                transform: translateY(-1px);
+            }
+        }
+    </style>
+</head>
+<body class="bg-dark text-gray-100 min-h-screen font-sans flex flex-col">
+    <header class="bg-primary border-b border-neon/30 shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <h1 class="text-[clamp(1.8rem,5vw,3rem)] font-bold text-center text-white text-shadow-neon">
+                自控设备全生命周期管理平台
+            </h1>
+        </div>
+    </header>
+
+    <nav class="bg-primary/80 backdrop-blur-md shadow-md border-b border-neon/20 sticky top-0 z-10">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-2 md:hidden">
+                    <button id="mobile-menu-btn" class="text-gray-300 hover:text-neon focus:outline-none">
+                        <i class="fa fa-bars text-xl"></i>
+                    </button>
+                </div>
+                <ul id="main-nav" class="hidden md:flex space-x-8 py-2">
+                    <li><a href="/" class="font-medium text-gray-300 hover:text-neon px-1 py-2 transition-all duration-300 hover:border-b-2 hover:border-neon/50">首页</a></li>
+                    <li><a href="/equipment/" class="font-medium text-gray-300 hover:text-neon px-1 py-2 transition-all duration-300 hover:border-b-2 hover:border-neon/50">设备管理</a></li>
+                    <li><a href="/documents/" class="font-medium text-gray-300 hover:text-neon px-1 py-2 transition-all duration-300 hover:border-b-2 hover:border-neon/50">文档管理</a></li>
+                    <li><a href="/maintenance/reminders/" class="font-medium text-neon border-b-2 border-neon px-1 py-2 transition-all duration-300">维护提醒</a></li>
+                    <li><a href="/monitoring/" class="font-medium text-gray-300 hover:text-neon px-1 py-2 transition-all duration-300 hover:border-b-2 hover:border-neon/50">生命周期分析</a></li>
+                </ul>
+            </div>
+        </div>
+        <!-- 移动端菜单 -->
+        <div id="mobile-menu" class="hidden md:hidden bg-primary/95 border-t border-neon/20 absolute w-full">
+            <ul class="flex flex-col space-y-4 p-4">
+                <li><a href="/" class="font-medium text-gray-300 hover:text-neon block py-2 transition-all duration-300">首页</a></li>
+                <li><a href="/equipment/" class="font-medium text-gray-300 hover:text-neon block py-2 transition-all duration-300">设备管理</a></li>
+                <li><a href="/documents/" class="font-medium text-gray-300 hover:text-neon block py-2 transition-all duration-300">文档管理</a></li>
+                <li><a href="/maintenance/reminders/" class="font-medium text-neon block py-2 transition-all duration-300">维护提醒</a></li>
+                <li><a href="/monitoring/" class="font-medium text-gray-300 hover:text-neon block py-2 transition-all duration-300">生命周期分析</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <script>
+        // 移动端菜单切换
+        document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+        });
+    </script>
+
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <div class="max-w-2xl mx-auto bg-primary rounded-xl shadow-lg p-6 border border-neon/20 card-hover">
+            <h2 class="text-2xl font-semibold mb-6 text-center text-white text-shadow-neon">添加维护记录</h2>
+            <div class="mb-6 p-4 bg-primary/50 rounded-md border border-neon/20">
+                <h3 class="text-lg font-medium mb-2 text-neon">设备信息</h3>
+                <p class="text-gray-300 mb-1"><span class="font-medium text-white">设备名称:</span> {{ equipment.name }}</p>
+                <p class="text-gray-300 mb-1"><span class="font-medium text-white">型号:</span> {{ equipment.model }}</p>
+                <p class="text-gray-300"><span class="font-medium text-white">生产编号:</span> {{ equipment.production_number }}</p>
+            </div>
+            <form action="/maintenance/create/" method="post" class="space-y-6">
+                <input type="hidden" name="equipment_id" value="{{ equipment.id }}">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="maintenance_date" class="block text-gray-300 font-medium mb-2">维护日期</label>
+                        <input type="date" id="maintenance_date" name="maintenance_date" required
+                            class="bg-primary/50 border border-neon/30 rounded-md w-full px-4 py-2 text-white focus:outline-none focus:border-neon focus:border-glow">
+                    </div>
+                    <div>
+                        <label for="maintenance_type" class="block text-gray-300 font-medium mb-2">维护类型</label>
+                        <select id="maintenance_type" name="maintenance_type" required
+                            class="bg-primary/50 border border-neon/30 rounded-md w-full px-4 py-2 text-white focus:outline-none focus:border-neon focus:border-glow">
+                            <option value="日常维护">日常维护</option>
+                            <option value="定期检修">定期检修</option>
+                            <option value="故障维修">故障维修</option>
+                            <option value="升级改造">升级改造</option>
+                        </select>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label for="notes" class="block text-gray-300 font-medium mb-2">维护备注</label>
+                        <textarea id="notes" name="notes" rows="4"
+                            class="bg-primary/50 border border-neon/30 rounded-md w-full px-4 py-2 text-white focus:outline-none focus:border-neon focus:border-glow"></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-center space-x-4">
+                    <button type="submit" class="bg-secondary hover:bg-secondary/90 text-white font-medium py-2 px-6 rounded-md transition duration-300 border border-neon/50 hover:border-glow flex items-center justify-center"><i class="fa fa-save mr-2"></i>保存记录</button>
+                    <a href="/equipment/{{ equipment.id }}" class="bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium py-2 px-6 rounded-md transition duration-300">
+                        取消
+                    </a>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <footer class="bg-primary border-t border-neon/30 py-8 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-400">自控设备全生命周期管理平台 &copy; 2025</p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>维护提醒</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/static/chart.umd.min.js"></script>
+    <script>
+        // 获取实际图表数据并初始化图表
+        function initCharts() {
+            // 从API获取设备监控数据
+            fetch('/monitoring/data/')
+                .then(response => response.json())
+                .then(data => {
+                    // 维护提醒趋势图表
+                    const trendCtx = document.getElementById('remindersTrendChart').getContext('2d');
+                    new Chart(trendCtx, {
+                        type: 'line',
+                        data: {
+                            labels: data.maintenance_history.map(item => item.month),
+                            datasets: [{
+                                label: '维护记录数',
+                                data: data.maintenance_history.map(item => item.count),
+                                borderColor: '#06b6d4',
+                                backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(255, 255, 255, 0.1)'
+                                    },
+                                    ticks: {
+                                        color: 'rgba(255, 255, 255, 0.7)'
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        color: 'rgba(255, 255, 255, 0.1)'
+                                    },
+                                    ticks: {
+                                        color: 'rgba(255, 255, 255, 0.7)'
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    labels: {
+                                        color: 'rgba(255, 255, 255, 0.7)'
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    // 设备类型分布图表
+                    const typeCtx = document.getElementById('equipmentTypeChart').getContext('2d');
+                    new Chart(typeCtx, {
+                        type: 'pie',
+                        data: {
+                            labels: Object.keys(data.equipment_type_distribution),
+                            datasets: [{
+                                data: Object.values(data.equipment_type_distribution),
+                                backgroundColor: [
+                                    '#06b6d4',
+                                    '#3b82f6',
+                                    '#10b981',
+                                    '#f59e0b',
+                                    '#6366f1',
+                                    '#ec4899',
+                                    '#8b5cf6',
+                                    '#14b8a6'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    labels: {
+                                        color: 'rgba(255, 255, 255, 0.7)'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('获取图表数据失败:', error);
+                    // 如果获取数据失败，显示友好的错误信息
+                    document.getElementById('remindersTrendChart').parentElement.innerHTML = '<p class="text-center text-red-500 mt-4">无法加载图表数据</p>';
+                    document.getElementById('equipmentTypeChart').parentElement.innerHTML = '<p class="text-center text-red-500 mt-4">无法加载图表数据</p>';
+                });
+        }
+
+        // 在文档加载完成后初始化图表
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+        });
+
+        
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0f172a',
+                        secondary: '#1e40af',
+                        accent: '#3b82f6',
+                        neon: '#06b6d4',
+                        dark: '#020617',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .bg-gradient-tech {
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            }
+            .text-shadow-neon {
+                text-shadow: 0 0 8px rgba(6, 182, 212, 0.5);
+            }
+            .border-glow {
+                box-shadow: 0 0 5px rgba(6, 182, 212, 0.7);
+            }
+        }
+    </style>
+</head>
+<body class="bg-dark text-gray-100 min-h-screen font-sans">
+    <header class="bg-primary border-b border-neon/30 shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <h1 class="text-3xl font-bold text-center">自控设备全生命周期管理平台</h1>
+        </div>
+    </header>
+
+    <nav class="bg-primary/80 backdrop-blur-md shadow-md border-b border-neon/20">
+        <div class="container mx-auto px-4">
+            <ul class="flex space-x-6 py-4">
+                <li><a href="/" class="font-medium text-gray-300 hover:text-neon transition-colors duration-300">首页</a></li>
+                <li><a href="/equipment/" class="font-medium text-gray-300 hover:text-neon transition-colors duration-300">设备管理</a></li>
+                <li><a href="/maintenance/reminders/" class="font-medium text-neon hover:text-neon/80 transition-colors duration-300 border-b-2 border-neon">维护提醒</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
+            <h2 class="text-2xl font-semibold text-shadow-neon">维护提醒列表</h2>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <input type="text" id="search" placeholder="搜索设备..." class="bg-primary/50 border border-neon/30 text-gray-300 rounded-md px-4 py-2 pr-10 focus:outline-none focus:border-neon focus:border-glow w-full sm:w-64">
+                    <i class="fas fa-search absolute right-3 top-2.5 text-gray-400"></i>
+                </div>
+                <select id="filter-days" class="bg-primary/50 border border-neon/30 text-gray-300 rounded-md px-4 py-2 focus:outline-none focus:border-neon focus:border-glow">
+                    <option value="7">未来7天</option>
+                    <option value="15" selected>未来15天</option>
+                    <option value="30">未来30天</option>
+                    <option value="90">未来90天</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="bg-primary/50 rounded-lg shadow-md p-6 mb-8 border border-neon/30 overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-700">
+                <thead>
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">设备名称</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">型号</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">下次维护日期</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">剩余天数</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">设备状态</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">操作</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700" id="reminders-table-body">
+                    {% if reminders %}
+                        {% for reminder in reminders %}
+                        <tr class="hover:bg-primary/60 transition-colors duration-150">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{{ reminder.equipment_name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{{ reminder.model }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{{ reminder.next_maintenance.strftime('%Y-%m-%d') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                    {% if reminder.remaining_days <= 7 %}
+                                        bg-red-100 text-red-800
+                                    {% elif reminder.remaining_days <= 15 %}
+                                        bg-yellow-100 text-yellow-800
+                                    {% else %}
+                                        bg-green-100 text-green-800
+                                    {% endif %}">
+                                    {{ reminder.remaining_days }} 天
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{{ reminder.current_status }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                                <div class="flex space-x-2">
+                                    <a href="/equipment/{{ reminder.equipment_id }}" class="text-neon hover:text-neon/80 transition-colors duration-300"><i class="fas fa-eye"></i> 查看</a>
+                                    <a href="/maintenance/create/{{ reminder.equipment_id }}" class="text-green-400 hover:text-green-300 transition-colors duration-300"><i class="fas fa-tools"></i> 维护</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-400">暂无维护提醒</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-primary rounded-xl p-6 shadow-lg border border-neon/20">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-300">总提醒数</h3>
+                    <i class="fa fa-bell text-2xl text-neon"></i>
+                </div>
+                <p class="text-3xl font-bold text-white">{{ total_reminders }}</p>
+                <p class="text-gray-500 mt-2">{{ percent_in_7_days }}% 在未来7天内</p>
+            </div>
+            <div class="bg-primary rounded-xl p-6 shadow-lg border border-neon/20">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-300">紧急提醒</h3>
+                    <i class="fa fa-exclamation-triangle text-2xl text-red-500"></i>
+                </div>
+                <p class="text-3xl font-bold text-white">{{ urgent_reminders }}</p>
+                <p class="text-gray-500 mt-2"><i class="fa fa-arrow-up text-red-500"></i> 需立即处理</p>
+            </div>
+            <div class="bg-primary rounded-xl p-6 shadow-lg border border-neon/20">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-300">已完成维护</h3>
+                    <i class="fa fa-check-circle text-2xl text-green-500"></i>
+                </div>
+                <p class="text-3xl font-bold text-white">{{ completed_maintenances }}</p>
+                <p class="text-gray-500 mt-2">{{ completion_rate }}% 完成率</p>
+            </div>
+        </div>
+
+        <!-- 图表区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="bg-primary rounded-xl p-6 shadow-lg border border-neon/20">
+                <h3 class="text-xl font-semibold mb-6 text-white">维护提醒趋势</h3>
+                <div class="h-80">
+                    <canvas id="remindersTrendChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-primary rounded-xl p-6 shadow-lg border border-neon/20">
+                <h3 class="text-xl font-semibold mb-6 text-white">设备类型分布</h3>
+                <div class="h-80">
+                    <canvas id="equipmentTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-primary py-8 mt-12 border-t border-neon/30">
+        <div class="container mx-auto px-4 text-center">
+            <p>自控设备全生命周期管理平台 &copy; 2025</p>
+        </div>
+    </footer>
+
+    <script>
+
+        // 搜索功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('search');
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const tableRows = document.querySelectorAll('#reminders-table-body tr');
+
+                tableRows.forEach(row => {
+                    const equipmentName = row.querySelector('td:first-child').textContent.toLowerCase();
+                    const model = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                    if (equipmentName.includes(searchTerm) || model.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+
+            // 筛选功能
+            const filterDays = document.getElementById('filter-days');
+            filterDays.addEventListener('change', function() {
+                // 这里可以添加筛选逻辑
+                alert(`筛选未来 ${this.value} 天的提醒`);
+                // 实际应用中，应该重新加载数据或过滤现有数据
+            });
+        });
+    </script>
+</body>
+</html>
